@@ -92,36 +92,20 @@ router.get("/diagnostic", async (req, res) => {
 router.get("/latest/:deviceId", async (req, res) => {
     try {
         const { deviceId } = req.params;
+        const database = client.database(databaseId);
+        const container = database.container(containerId);
         console.log(`🔄 Fetching latest telemetry for device: ${deviceId}`);
+        const device = await Device.findById(deviceId);
+        console.log(`hii???Container for device: ${device.deviceName}`);
 
-        // Fetch device name from MongoDB
-        const deviceName = await fetchDeviceName(deviceId);
-        if (!deviceName) {
-            return res.status(404).json({ error: "Device not found" });
-        }
-
+        // Skip MongoDB validation
+        console.log("⚠️ Skipping MongoDB validation");
         // Fetch latest telemetry data from CosmosDB
-        let latestData = await getTelemetryDataByDeviceName(deviceName);
+    
+        let latestData = await getTelemetryDataByDeviceName(device.deviceName , container);
 
         if (!latestData) {
-            console.log(`⚠️ No live telemetry found for ${deviceName}. Checking stored data...`);
-
-            // Fetch last known stored values from MongoDB
-            const storedDeviceData = await Device.findById(deviceId).lean();
-
-            if (!storedDeviceData) {
-                return res.json({ message: "No telemetry data available" });
-            }
-
-            console.log(`✅ Found stored data for ${deviceName}:`, storedDeviceData);
-
-            latestData = {
-                temperature: storedDeviceData.lastTemperature || 0,
-                humidity: storedDeviceData.lastHumidity || 0,
-                oilLevel: storedDeviceData.lastOilLevel || 0,
-                openAlerts: storedDeviceData.lastOpenAlerts || 0,
-                timestamp: storedDeviceData.lastUpdated || new Date().toISOString(),
-            };
+            return res.json({ message: "No telemetry data available" });
         }
 
         res.json(latestData);
@@ -144,6 +128,7 @@ router.get("/realtime/:deviceId", async (req, res) => {
 
         const database = client.database(databaseId);
         const container = database.container(containerId);
+        console.log(`___________________Container for device: ${container}`);
 
         const query = { 
             query: "SELECT TOP 20 * FROM c WHERE c.device = @deviceName ORDER BY c._ts DESC", 
