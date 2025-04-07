@@ -39,5 +39,21 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// PUT (Update) a plant
+// PUT (Update) a plant
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedPlant = await Plant.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!updatedPlant) {
+      return res.status(404).json({ message: "Plant not found" });
+    }
+    res.json(updatedPlant);
+  } catch (error) {
+    console.error("❌ Error updating plant:", error.message);
+    res.status(500).json({ error: "Failed to update plant" });
+  }
+});
 module.exports = router;
 

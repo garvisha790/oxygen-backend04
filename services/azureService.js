@@ -19,5 +19,14 @@ const registerDeviceInAzure = async (deviceId) => {
     }
   }
 };
+const { registry } = require('./azureConnection'); // Assuming you have this
 
+async function sendConfigUpdate(deviceId, configUpdate) {
+  const twin = await registry.getTwin(deviceId);
+  await twin.update({
+    properties: {
+      desired: configUpdate
+    }
+  });
+}
 module.exports = { registerDeviceInAzure };

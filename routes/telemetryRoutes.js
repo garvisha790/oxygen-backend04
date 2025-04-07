@@ -229,4 +229,24 @@ router.get("/saved-latest/:deviceName", async (req, res) => {
     }
 });
 
+router.post('/threshold/:deviceId', async (req, res) => {
+    const { deviceId } = req.params;
+    const { metric, threshold } = req.body;
+  
+    try {
+      // Optionally save in DB
+      await saveThresholdToDB(deviceId, metric, threshold);
+  
+      // Send update to device via Azure IoT Hub
+      await azureService.sendConfigUpdate(deviceId, {
+        [metric]: threshold,
+      });
+  
+      res.status(200).json({ message: 'Threshold sent to device' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Failed to send threshold' });
+    }
+  });
+
 module.exports = router;
